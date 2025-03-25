@@ -419,51 +419,39 @@
     mySidebar.classList.remove("open");
   });
 
-  // Waitlist Functionality: Save entries permanently using localStorage.
-  // Allow only one entry per email.
-  function loadWaitlist() {
-    const waitlist = JSON.parse(localStorage.getItem("waitlist")) || [];
-    const tbody = document.getElementById("waitlist-body");
-    tbody.innerHTML = "";
-    waitlist.forEach(user => {
-      const row = document.createElement("tr");
-      row.innerHTML = `<td>${user.name}</td><td>${user.email}</td><td>${user.phone || ""}</td>`;
-      tbody.appendChild(row);
+   // Waitlist form submission using fetch to the Flask API
+   document.getElementById("waitlist-form").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim().toLowerCase();
+      const phone = document.getElementById("phone").value.trim();
+
+      fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, phone })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          alert(data.error);
+        } else {
+          alert("Thank you for joining our waitlist! You'll be notified when we launch.");
+          document.getElementById("waitlist-form").reset();
+        }
+      })
+      .catch(err => {
+        console.error("Error submitting waitlist data:", err);
+        alert("An error occurred. Please try again later.");
+      });
     });
-  }
-  document.getElementById("waitlist-form").addEventListener("submit", function(e) {
-    e.preventDefault();
-    const name = document.getElementById("name").value.trim();
-    const email = document.getElementById("email").value.trim().toLowerCase();
-    const phone = document.getElementById("phone").value.trim();
-    const waitlist = JSON.parse(localStorage.getItem("waitlist")) || [];
-    const alreadyApplied = waitlist.some(user => user.email === email);
-    if (alreadyApplied) {
-      alert("youve already applied for the waitlist!");
-      return;
-    }
-    waitlist.push({ name, email, phone });
-    localStorage.setItem("waitlist", JSON.stringify(waitlist));
-    this.reset();
-    loadWaitlist();
-    alert("Thank you for joining our waitlist! You'll be the first to know when we launch.");
-  });
-  function showWaitlist() {
-    var encodedPassword = "Um9zZTgyMw=="; 
-    var ownerPassword = atob(encodedPassword);
-    var password = prompt("Enter owner password to view the waitlist:");
-    if (password === ownerPassword) {
-      document.getElementById("waitlist-container").style.display = "block";
-      loadWaitlist();
-    } else {
-      alert("Incorrect password!");
-    }
-  }
+  
+
+
   document.getElementById("to-top").addEventListener("click", function(e) {
     e.preventDefault();
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
-  window.onload = loadWaitlist;
   
   // Intersection Observer to reveal .fade-in elements as they come into view
   const observer = new IntersectionObserver(entries => {
